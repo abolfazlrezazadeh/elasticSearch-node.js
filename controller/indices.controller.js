@@ -1,6 +1,17 @@
+const createHttpEror = require("http-errors")
+const { elasticClient } = require("../config/elastic.config")
 async function createIndex(req, res, next){
     try {
-        
+        const {indexName} = req.body
+        if(!indexName) throw createHttpEror.BadRequest("Invalid value of index")
+        // create name of elastic
+        const result = await elasticClient.indices.create({index : indexName})
+        console.log(result);
+        return res.status(201).json({
+            statusCode : 201,
+            result,
+            message : "index created"
+        })
     } catch (error) {
         next(error)
     }
