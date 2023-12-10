@@ -27,7 +27,11 @@ async function removeIndex(req, res, next){
 
 async function getIndices(req, res, next){
     try {
-        
+        const indices = await elasticClient.indices.getAlias()
+        return res.status(200).json({
+            statusCode : 200, 
+            indices : Object.keys(indices)
+        })
     } catch (error) {
         next(error)
     }
