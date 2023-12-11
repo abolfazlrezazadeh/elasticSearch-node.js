@@ -19,6 +19,13 @@ async function createIndex(req, res, next){
 
 async function removeIndex(req, res, next){
     try {
+        const {indexName} = req.params;
+        if(!indexName) throw createHttpEror.BadRequest("value ofindexName is not correct")
+         await elasticClient.indices.delete({index : indexName})
+        return res.status(200).json({
+            statusCode : 200,
+            message : "index deleted successfully"
+        })
         
     } catch (error) {
         next(error)
