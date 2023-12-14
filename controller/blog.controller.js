@@ -4,6 +4,17 @@ const { createBlogSchema } = require("../validator/blog.validator");
 let indexName = "blog";
 async function getAllBlogs(req, res, next) {
   try {
+    const value = req.params.value;
+    const blogs = await elasticClient.search({
+      index : indexName,
+      // query
+      q : value
+    })
+    return res.status(200).json({
+      statusCode : 200,
+      // return main value
+      blogs : blogs.hits.hits
+    })
   } catch (error) {
     next(error);
   }
@@ -14,6 +25,7 @@ async function createNewBlog(req, res, next) {
     const blogBody = await createBlogSchema.validateAsync(req.body);
     const { title, author, text } = blogBody;
     const createBlogResult = await blogModel.create({title , text, author});
+    // save to elastic too
     if(createBlogResult){
       // we can do here some queries
       // const finalData = await blogModel.aggregate([
@@ -42,7 +54,6 @@ async function saveToElastic(data){
       author : data.author
     }
   })
-  console.log(createResult);
   if(createResult) return console.log("save to elastic is successfull")
 }
 
