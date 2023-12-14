@@ -1,4 +1,5 @@
 const { elasticClient } = require("../config/elastic.config");
+const { blogModel } = require("../model/blog");
 const { createBlogSchema } = require("../validator/blog.validator");
 let indexName = "blog";
 async function getAllBlogs(req, res, next) {
@@ -12,14 +13,7 @@ async function createNewBlog(req, res, next) {
   try {
     const blogBody = await createBlogSchema.validateAsync(req.body);
     const { title, author, text } = blogBody;
-    const createBlogResult = await elasticClient.index({
-      index: indexName,
-      document: {
-        title,
-        author,
-        text,
-      },
-    });
+    const createBlogResult = await blogModel.create({title , text, author})
     return res.status(201).json({
       statusCode: 201,
       message: "blog created successfully",
