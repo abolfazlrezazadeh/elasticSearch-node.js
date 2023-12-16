@@ -1,20 +1,24 @@
 const { elasticClient } = require("../config/elastic.config");
 const { blogModel } = require("../model/blog");
 const { createBlogSchema } = require("../validator/blog.validator");
+const createError = require("http-errors");
+const { EventEmitter } = require("events");
+const { query } = require("express");
+const eventEmitter = new EventEmitter();
 let indexName = "blog";
 async function getAllBlogs(req, res, next) {
   try {
     const value = req.params.value;
     const blogs = await elasticClient.search({
-      index : indexName,
+      index: indexName,
       // query
-      q : value
-    })
+      q: value,
+    });
     return res.status(200).json({
-      statusCode : 200,
+      statusCode: 200,
       // return main value
-      blogs : blogs.hits.hits
-    })
+      blogs: blogs.hits.hits,
+    });
   } catch (error) {
     next(error);
   }
@@ -24,16 +28,16 @@ async function createNewBlog(req, res, next) {
   try {
     const blogBody = await createBlogSchema.validateAsync(req.body);
     const { title, author, text } = blogBody;
-    const createBlogResult = await blogModel.create({title , text, author});
+    const createBlogResult = await blogModel.create({ title, text, author });
     // save to elastic too
-    if(createBlogResult){
+    if (createBlogResult) {
       // we can do here some queries
       // const finalData = await blogModel.aggregate([
       //   {$match : {author : 1, title : 1 , text : 1, _id : 0}},
       //   {$lookup : {}},
       //   {$unwind : {}}
       // ])
-      await saveToElastic(createBlogResult)
+      await saveToElastic(createBlogResult);
     }
     return res.status(201).json({
       statusCode: 201,
@@ -45,20 +49,19 @@ async function createNewBlog(req, res, next) {
   }
 }
 
-async function saveToElastic(data){
-  const createResult = await elasticClient.index({
-    index : indexName,
-    document : {
-      title : data.title,
-      text : data.text,
-      author : data.author
-    }
-  })
-  if(createResult) return console.log("save to elastic is successfull")
-}
-
 async function removeBlog(req, res, next) {
   try {
+    const { mongoID } = req.params;
+    await findBlogInMongodb(mongoID)
+    const mongoDeleteResult = await blogModel.deleteOne({_id :mongoID })
+    if(mongoDeleteResult.deletedCount == 0){
+      throw createError.BadRequest("failed please try again")
+    }
+    await deleteFromElastic(mongoID);
+    return res.status(200).json({
+      statusCode: 200,
+      message: "blog deleted successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -83,6 +86,36 @@ async function searchByRegex(req, res, next) {
   } catch (error) {
     next(error);
   }
+}
+
+async function saveToElastic(data) {
+  const createResult = await elasticClient.index({
+    index: indexName,
+    document: {
+      title: data.title,
+      text: data.text,
+      author: data.author,
+      mongoID: data._id,
+    },
+  });
+  if (createResult) return console.log("save to elastic is successfull");
+}
+
+async function deleteFromElastic(mongoID) {
+  await elasticClient.deleteByQuery({
+    index: indexName,
+    query: {
+      match: {
+        mongoID: mongoID,
+      },
+    },
+  });
+}
+
+async function findBlogInMongodb(mongoID) {
+  const findBlogInMongo = await blogModel.findOne({ _id: mongoID });
+  if (!findBlogInMongo) throw createError.NotFound("blog is not exist");
+  return findBlogInMongo;
 }
 
 module.exports = {
