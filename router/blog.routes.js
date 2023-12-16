@@ -1,4 +1,4 @@
-const { createNewBlog, getAllBlogs, removeBlog } = require("../controller/blog.controller");
+const { createNewBlog, getAllBlogs, removeBlog, updateBlogInMongoDB } = require("../controller/blog.controller");
 
 const blogRouter = require("express").Router();
 
@@ -7,6 +7,8 @@ blogRouter.post("/create" , createNewBlog)
 blogRouter.get("/list/:value?" , getAllBlogs)
 
 blogRouter.delete("/delete/:mongoID?" , removeBlog)
+
+blogRouter.put("/update/:mongoID?" , updateBlogInMongoDB)
 
 module.exports={
     blogRouter

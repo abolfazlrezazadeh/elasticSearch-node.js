@@ -76,32 +76,40 @@ async function updateBlogInMongoDB(req, res, next) {
       if (!data[key]) delete data[key];
       if (typeof data[key] == "string") data[key] = data[key].trim();
     });
-    await findBlogInMongodb(mongoID)
-    const updateResult = await blogModel.updateOne({_id : mongoID},{$set : data})
-    if(updateResult.modifiedCount == 0 ) throw createError.BadRequest("failed please try again")
-    await updateBlogInElastic(mongoID, data)
-  return res.status(200).json({
-    statusCode : 200 , 
-    message : "blog updated successfully"
-  })
+    await findBlogInMongodb(mongoID);
+    const updateResult = await blogModel.updateOne(
+      { _id: mongoID },
+      { $set: data }
+    );
+    if (updateResult.modifiedCount == 0)
+      throw createError.BadRequest("failed please try again");
+    await updateBlogInElastic(mongoID, data);
+    return res.status(200).json({
+      statusCode: 200,
+      message: "blog updated successfully",
+    });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 }
 
 async function updateBlogInElastic(mongoID, data) {
-    const elasticBlog = (await elasticClient.search({
-      index: indexName,
-      query: { match: { mongoID } },
-    })).hits.hits?.[0] || {}
-    // main content
-    const payload = elasticBlog._source || {}
-    const updateElasticBlog = await elasticClient.index({
-      index: indexName,
-      mongoID,
-      document: {...payload, ...data},
-    });
-  return console.log(updateElasticBlog);
+  const elasticBlog =
+  //find blog in elastic
+    (
+      await elasticClient.search({
+        index: indexName,
+        query: { match: { mongoID: mongoID } },
+      })
+    ).hits.hits?.[0] || {};
+  // main content
+  const payload = elasticBlog._source || {};
+  const updateElasticBlog = await elasticClient.index({
+    index: indexName,
+    id: elasticBlog._source.mongoID,
+    document: { ...payload, ...data },
+  });
 }
 
 async function searchByTitle(req, res, next) {
@@ -162,5 +170,5 @@ module.exports = {
   searchByTitle,
   searchByMultyFeild,
   searchByRegex,
-  updateBlogInMongoDB
+  updateBlogInMongoDB,
 };
