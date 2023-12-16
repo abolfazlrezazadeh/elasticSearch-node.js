@@ -89,7 +89,20 @@ async function updateBlogInMongoDB(req, res, next) {
   }
 }
 
-
+async function updateBlogInElastic(mongoID, data) {
+    const elasticBlog = (await elasticClient.search({
+      index: indexName,
+      query: { match: { mongoID } },
+    })).hits.hits?.[0] || {}
+    // main content
+    const payload = elasticBlog._source || {}
+    const updateElasticBlog = await elasticClient.index({
+      index: indexName,
+      mongoID,
+      document: {...payload, ...data},
+    });
+  return console.log(updateElasticBlog);
+}
 
 async function searchByTitle(req, res, next) {
   try {
