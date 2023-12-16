@@ -4,6 +4,7 @@ const { createBlogSchema } = require("../validator/blog.validator");
 const createError = require("http-errors");
 const { EventEmitter } = require("events");
 const { query } = require("express");
+const { object } = require("@hapi/joi");
 const eventEmitter = new EventEmitter();
 let indexName = "blog";
 async function getAllBlogs(req, res, next) {
@@ -52,10 +53,10 @@ async function createNewBlog(req, res, next) {
 async function removeBlog(req, res, next) {
   try {
     const { mongoID } = req.params;
-    await findBlogInMongodb(mongoID)
-    const mongoDeleteResult = await blogModel.deleteOne({_id :mongoID })
-    if(mongoDeleteResult.deletedCount == 0){
-      throw createError.BadRequest("failed please try again")
+    await findBlogInMongodb(mongoID);
+    const mongoDeleteResult = await blogModel.deleteOne({ _id: mongoID });
+    if (mongoDeleteResult.deletedCount == 0) {
+      throw createError.BadRequest("failed please try again");
     }
     await deleteFromElastic(mongoID);
     return res.status(200).json({
@@ -66,6 +67,29 @@ async function removeBlog(req, res, next) {
     next(error);
   }
 }
+
+async function updateBlogInMongoDB(req, res, next) {
+  try {
+    const { mongoID } = req.params;
+    const data = req.body;
+    Object.keys(data).forEach((key) => {
+      if (!data[key]) delete data[key];
+      if (typeof data[key] == "string") data[key] = data[key].trim();
+    });
+    await findBlogInMongodb(mongoID)
+    const updateResult = await blogModel.updateOne({_id : mongoID},{$set : data})
+    if(updateResult.modifiedCount == 0 ) throw createError.BadRequest("failed please try again")
+    await updateBlogInElastic(mongoID, data)
+  return res.status(200).json({
+    statusCode : 200 , 
+    message : "blog updated successfully"
+  })
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 
 async function searchByTitle(req, res, next) {
   try {
@@ -125,4 +149,5 @@ module.exports = {
   searchByTitle,
   searchByMultyFeild,
   searchByRegex,
+  updateBlogInMongoDB
 };
