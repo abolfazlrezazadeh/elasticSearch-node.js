@@ -112,8 +112,6 @@ async function updateBlogInElastic(mongoID, data) {
     document: { ...payload, ...data },
   });
   // second way to update in elastic
-  // without validation of data 
-  // it is aotomaticly validate daa and updata specific field
 
   // const updateElasticBlog = await elasticClient.update({
   //   index: indexName,
