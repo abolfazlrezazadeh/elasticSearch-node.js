@@ -123,6 +123,19 @@ async function updateBlogInElastic(mongoID, data) {
 
 async function searchByTitle(req, res, next) {
   try {
+    const {title} = req.query
+    const result = await elasticClient.search({
+      index: indexName,
+      query:{
+        match:{
+          title:title
+        }
+      }
+    })
+    return res.status(200).json({
+      statusCode : 200,
+      result : result.hits.hits
+    })
   } catch (error) {
     next(error);
   }
