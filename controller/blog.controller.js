@@ -105,11 +105,22 @@ async function updateBlogInElastic(mongoID, data) {
     ).hits.hits?.[0] || {};
   // main content
   const payload = elasticBlog._source || {};
-  const updateElasticBlog = await elasticClient.index({
+  // updating
+   await elasticClient.index({
     index: indexName,
     id: elasticBlog._source.mongoID,
     document: { ...payload, ...data },
   });
+  // second way to update in elastic
+  // without validation of data 
+  // it is aotomaticly validate daa and updata specific field
+
+  // const updateElasticBlog = await elasticClient.update({
+  //   index: indexName,
+  //   id: elasticBlog._source.mongoID,
+  //   doc: data ,
+  // });
+
 }
 
 async function searchByTitle(req, res, next) {
