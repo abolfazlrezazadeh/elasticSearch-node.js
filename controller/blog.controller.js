@@ -151,16 +151,29 @@ async function searchByMultyFeild(req, res, next) {
       },
     });
     return res.status(200).json({
-      statusCode : 200,
-      result : result.hits.hits
-    })
+      statusCode: 200,
+      result: result.hits.hits,
+    });
   } catch (error) {
     next(error);
   }
 }
 
-async function searchByRegex(req, res, next) {
+async function searchByRegexp(req, res, next) {
   try {
+    const { search } = req.query;
+    const result = await elasticClient.search({
+      index: indexName,
+      query: {
+        regexp: {
+          title: `.*${search}.*`,
+        },
+      },
+    });
+    return res.status(200).json({
+      statusCode: 200,
+      result: result.hits.hits,
+    });
   } catch (error) {
     next(error);
   }
@@ -202,6 +215,6 @@ module.exports = {
   removeBlog,
   searchByTitle,
   searchByMultyFeild,
-  searchByRegex,
+  searchByRegexp,
   updateBlogInMongoDB,
 };
