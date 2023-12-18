@@ -3,8 +3,6 @@ const { blogModel } = require("../model/blog");
 const { createBlogSchema } = require("../validator/blog.validator");
 const createError = require("http-errors");
 const { EventEmitter } = require("events");
-const { query } = require("express");
-const { object } = require("@hapi/joi");
 const eventEmitter = new EventEmitter();
 let indexName = "blog";
 async function getAllBlogs(req, res, next) {
@@ -96,7 +94,7 @@ async function updateBlogInMongoDB(req, res, next) {
 
 async function updateBlogInElastic(mongoID, data) {
   const elasticBlog =
-  //find blog in elastic
+    //find blog in elastic
     (
       await elasticClient.search({
         index: indexName,
@@ -106,7 +104,7 @@ async function updateBlogInElastic(mongoID, data) {
   // main content
   const payload = elasticBlog._source || {};
   // updating
-   await elasticClient.index({
+  await elasticClient.index({
     index: indexName,
     id: elasticBlog._source.mongoID,
     document: { ...payload, ...data },
@@ -118,24 +116,23 @@ async function updateBlogInElastic(mongoID, data) {
   //   id: elasticBlog._source.mongoID,
   //   doc: data ,
   // });
-
 }
 
 async function searchByTitle(req, res, next) {
   try {
-    const {title} = req.query
+    const { title } = req.query;
     const result = await elasticClient.search({
       index: indexName,
-      query:{
-        match:{
-          title:title
-        }
-      }
-    })
+      query: {
+        match: {
+          title: title,
+        },
+      },
+    });
     return res.status(200).json({
-      statusCode : 200,
-      result : result.hits.hits
-    })
+      statusCode: 200,
+      result: result.hits.hits,
+    });
   } catch (error) {
     next(error);
   }
@@ -143,6 +140,16 @@ async function searchByTitle(req, res, next) {
 
 async function searchByMultyFeild(req, res, next) {
   try {
+    const { search } = req.query;
+    const result = await elasticClient.search({
+      index: indexName,
+      query: {
+        multi_match: {
+          query: search,
+          fields: ["title", "text", "author"],
+        },
+      },
+    });
   } catch (error) {
     next(error);
   }
