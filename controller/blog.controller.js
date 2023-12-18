@@ -150,6 +150,10 @@ async function searchByMultyFeild(req, res, next) {
         },
       },
     });
+    return res.status(200).json({
+      statusCode : 200,
+      result : result.hits.hits
+    })
   } catch (error) {
     next(error);
   }
