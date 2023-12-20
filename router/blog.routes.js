@@ -10,6 +10,8 @@ blogRouter.get("/multiFields" , searchByMultyFeild)
 
 blogRouter.get("/searchByRegexp" , searchByRegexp)
 
+blogRouter.get("/findBlogsByRegexByMultiFields" , findBlogsByRegexByMultiFields)
+
 blogRouter.get("/findByTitle" , searchByTitle)
 
 blogRouter.delete("/delete/:mongoID?" , removeBlog)
