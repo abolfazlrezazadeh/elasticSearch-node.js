@@ -1,4 +1,4 @@
-const { createNewBlog, getAllBlogs, removeBlog, updateBlogInMongoDB, searchByTitle, searchByMultyFeild, searchByRegexp } = require("../controller/blog.controller");
+const { createNewBlog, getAllBlogs, removeBlog, updateBlogInMongoDB, searchByTitle, searchByMultyFeild, searchByRegexp, findBlogsByRegexByMultiFields } = require("../controller/blog.controller");
 
 const blogRouter = require("express").Router();
 

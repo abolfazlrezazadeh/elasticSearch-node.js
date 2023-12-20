@@ -179,6 +179,36 @@ async function searchByRegexp(req, res, next) {
   }
 }
 
+async function findBlogsByRegexByMultiFields(req, res, next) {
+  try {
+    const { search } = req.query;
+    const result = await elasticClient.search({
+      index: indexName,
+      query: {
+        bool: {
+          should: [
+            {
+              regexp: { title: `.*${search}.*` },
+            },
+            {
+              regexp: { text: `.*${search}.*` },
+            },
+            {
+              regexp: { author: `.*${search}.*` },
+            },
+          ],
+        },
+      },
+    });
+    return res.status(200).json({
+      statusCode: 200,
+      result : result.hits.hits
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 async function saveToElastic(data) {
   const createResult = await elasticClient.index({
     index: indexName,
@@ -217,4 +247,5 @@ module.exports = {
   searchByMultyFeild,
   searchByRegexp,
   updateBlogInMongoDB,
+  findBlogsByRegexByMultiFields,
 };
